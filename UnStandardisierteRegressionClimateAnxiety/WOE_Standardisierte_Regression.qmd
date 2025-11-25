@@ -2,7 +2,7 @@
 title: "Worked Out Example"
 subtitle: "(Un-)Standardisierte Regression in R"
 format: 
-  typst: 
+  pdf: 
     papersize: a4
 ---
 
@@ -12,6 +12,7 @@ Wir verwenden für dieses Beispiel einen synthetischen Datensatz, der die Abhän
 ```{r}
 #| label: gen data
 #| echo: false
+#| eval: false
 library(tidyverse)
 set.seed(1896)
 data <-
@@ -22,3 +23,98 @@ data <-
 
 write_csv(data, "UnStandardisierteRegressionClimateAnxiety/woe_unstandregression.csv")
 ```
+
+### Import der Daten
+```{r}
+#| label: import data
+#| message: false
+#| warning: false
+library(readr) # für den data import
+library(dplyr) # für das datawrangling
+
+data <- readr::read_csv("https://ogy.de/t101")
+```
+
+## Deskriptive Statistik
+Mit folgendem Code können wir einfache Kennzahl der univariaten Deskriptivstatistik berechnen.
+```{r}
+#| label: deskriptive statistik
+#| results: hide
+
+# Mittelwerte
+mean(data$CA)             # <1>
+mean(data$PEB)
+
+# Standardabweichungen
+sd(data$CA)
+sd(data$PEB)
+```
+
+1. Das Dollarzeichen `$` wird verwendet, um auf eine bestimmte Spalte in einem Dataframe zuzugreifen. In diesem Fall greift `data$CA` auf die Spalte `CA` im Dataframe `data` zu.
+
+## Visualisierung der Daten
+```{r}
+#| label: scatterplot
+#| warning: false
+library(ggplot2) # für die visualisierung
+ggplot(data,                            # <1>
+       aes(x = CA, y = PEB)) +          # <2>
+  geom_point(alpha = .3) +              # <3>
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # <4>
+  labs(                                # <5>
+    title = "Scatterplot von Climate Anxiety und Pro-Environmental Behaviour",
+    x = "Climate Anxiety",
+    y = "Pro-Environmental Behaviour"
+  ) +
+  theme_minimal()                      # <6>
+```
+
+1. Plotten mit der Funktion `ggplot()`, wobei das erste Argument **immer** der Datensatz ist, der geplottet werden soll.
+2. `aes(x = CA, y = PEB)` definiert die ästhetischen Zuordnungen für das Diagramm, wobei `CA` auf der x-Achse und `PEB` auf der y-Achse dargestellt wird.
+3. `geom_point(alpha = .3)` fügt dem Diagramm Punkte hinzu, wobei `alpha = .3` die Transparenz der Punkte auf 30 % setzt.
+4. `geom_smooth(method = "lm", se = FALSE, color = "#267326")` fügt eine lineare Regressionslinie hinzu, wobei `se = FALSE` bedeutet, dass kein Konfidenzintervall angezeigt wird.
+5. `labs()` wird verwendet, um Titel und Achsenbeschriftungen hinzuzufügen.
+6. `theme_minimal()` wendet ein minimalistisches Design auf das Diagramm an.
+
+## Durchführung der Regression
+In der `lm()`-Funktion wird das lineare Regressionsmodell spezifiziert. Das erste Argument ist die Formel, die die abhängige Variable (`PEB`) links der Tilde `~` und die unabhängige Variable (`CA`) rechts der Tilde angibt. Das zweite Argument ist der Datensatz, der die Variablen enthält.
+```{r}
+#| label: regression
+
+# lineares Regressionsmodell
+lm(PEB ~ CA, data = data)
+```
+
+Der Outout kann wie folgt interpretiert werden:
+
+- Der Achsenabschnitt (Intercept) beträgt etwa 1.044. Dies bedeutet, dass wenn `CA` gleich 0 ist, der vorhergesagte Wert von `PEB` etwa 1.044 beträgt.
+- Der Koeffizient für `CA` beträgt etwa 2.636. Dies bedeutet, dass für jede Einheitserhöhung in `CA`, `PEB` im Durchschnitt um etwa 2.636 Einheiten zunimmt.
+
+
+
+## Durchführung der Regression mit standardisierten Variablen
+Das Problem bei dieser Regression ist, dass die Einheiten der Variablen recht beleibig sind: `CA` z.B. basiert auf einer Likertskala. Angenommen andere Forschende verwenden andere Anker für die Skala, dann sind die Regressionskoeffizienten nicht mehr vergleichbar. Um dieses Problem zu lösen, können wir die Variablen standardisieren (Mittelwert = 0, Standardabweichung = 1). Dies geschieht mit der `scale()`-Funktion. Anschließend führen wir die Regression mit den standardisierten Variablen durch.
+```{r}
+#| label: standardisierte regression
+# Variablen standardisieren
+data_std <- # <1>
+  data %>% # <2>
+  mutate(   # <3>
+    CA_std = scale(CA),   # <4>
+    PEB_std = scale(PEB)   # <5>
+  )
+# lineares Regressionsmodell mit standardisierten Variablen
+lm(PEB_std ~ CA_std, data = data_std)  #<6>
+```
+
+1. Wir erstellen ein neues Dataframe `data_std`, das die standardisierten Variablen enthält.
+2. Wir verwenden den Pipe-Operator `%>%`, um den Dataframe `data` an die nächste Funktion weiterzugeben (*»Nimm `data` und mache dann ...«*).
+3. Wir verwenden die `mutate()`-Funktion, um **neue Variablen** zu erstellen.
+4. `CA_std = scale(CA)` erstellt die standardisierte Version der Variable `CA`. Typisch ist hier in dieser Syntax, dass die neue Variable links vom Gleichheitszeichen steht und die Transformationsvorschrift rechts davon.
+5. `PEB_std = scale(PEB)` erstellt die standardisierte Version der Variable `PEB`.
+6. Wir führen die lineare Regression mit den standardisierten Variablen durch.
+
+Der Output kann wie folgt interpretiert werden:
+
+- Der Achsenabschnitt (Intercept) beträgt etwa 0. Dies ist zu erwarten, da standardisierte Variablen einen Mittelwert von 0 haben.
+- Der Koeffizient für `CA_std` beträgt etwa 0.43. Dies bedeutet, dass für jede Standardabweichungserhöhung in `CA`, `PEB` im Durchschnitt um etwa 0.43 Standardabweichungen zunimmt.
