@@ -7,4 +7,18 @@ format:
 ---
 
 ## Datengrundlage
-Wir verwenden für dieses Beispiel einen synthetischen Datensatz, der die Abhängige Variable `Pro-Environmental Behaviour` und die unabhängige `Climate Anxiety` enthält. Der Datensatz besteht aus 432 Beobachtungen.
+Wir verwenden für dieses Beispiel einen synthetischen Datensatz, der die Abhängige Variable `Pro-Environmental Behaviour` und die unabhängige `Climate Anxiety` enthält. Der Datensatz besteht aus 232 Beobachtungen.
+
+```{r}
+#| label: gen data
+#| echo: false
+library(tidyverse)
+set.seed(1896)
+data <-
+  tibble(
+    CA = round((rbeta(232, 6, 3))*5, 0),
+    PEB = CA*3 + rnorm(232, 0, 4)
+  )
+
+write_csv(data, "UnStandardisierteRegressionClimateAnxiety/woe_unstandregression.csv")
+```
