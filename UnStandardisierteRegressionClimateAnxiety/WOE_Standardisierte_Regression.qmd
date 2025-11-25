@@ -1,0 +1,10 @@
+---
+title: "Worked Out Example"
+subtitle: "(Un-)Standardisierte Regression in R"
+format: 
+  typst: 
+    papersize: a4
+---
+
+## Datengrundlage
+Wir verwenden für dieses Beispiel einen synthetischen Datensatz, der die Abhängige Variable `Pro-Environmental Behaviour` und die unabhängige `Climate Anxiety` enthält. Der Datensatz besteht aus 432 Beobachtungen.
